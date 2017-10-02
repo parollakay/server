@@ -6,26 +6,12 @@ const sgMail = require('@sendgrid/mail');
       sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 const emails = require('./emails');
 
-winston.add(winston.transports.Loggly, {
-  token: process.env.LOGGLY_TOKEN,
-  subdomain: 'parollakay',
-  tags: ['Winston-Nodejs'],
-  json: true
-});
+winston.add(winston.transports.Loggly, { token: process.env.LOGGLY_TOKEN, subdomain: 'parollakay', tags: ['Winston-Nodejs'], json: true });
 
 const sendToUser = (type, to, subject, body) => {
-  const from = {
-    name: 'Jorge',
-    //email: 'jorge@parollakay.com'
-    email: 'jorge@solcef.org'
-  };
+  const from = { name: 'Jorge', email: 'jorge@parollakay.com' };
   return new Promise((resolve, reject) => {
-    const msg = {
-      to,
-      from,
-      subject: type.subject,
-      html: type.html
-    }
+    const msg = { to, from, subject: type.subject, html: type.html }
     sgMail.send(msg, (err, result) => err ? reject(err) : resolve(result));
   });
 }
@@ -47,27 +33,18 @@ module.exports = {
   },
   sendEmail: {
     welcome: to => sendToUser(emails.welcome, to),
+    pwResetSuccess: to => sendToUser(emails.pwResetSuccess, to),
     newDefinition: (to, term) => {
-      const type = {
-        subject: emails.newDefinition.subject,
-        html: emails.newDefinition.html(term)
-      }
+      const type = { subject: emails.newDefinition.subject, html: emails.newDefinition.html(term) }
       return sendToUser(type, to);
     },
     custom: (to, subject, html) => {
-      const type = {
-        subject,
-        html
-      }
+      const type = { subject, html }
       return sendToUser(type, to);
     },
     forgotPassword: (to, token) => {
-      const type = {
-        subject: emails.resetpassword.subject,
-        html: emails.resetpassword.html(token)
-      }
+      const type = { subject: emails.resetpassword.subject, html: emails.resetpassword.html(token) };
       return sendToUser(type, to);
-    },
-    pwResetSuccess: to => sendToUser(emails.pwResetSuccess, to),
+    }
   }
 }

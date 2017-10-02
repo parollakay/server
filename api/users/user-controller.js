@@ -16,9 +16,9 @@ module.exports = {
         if (err) return handleErr(res, 500);
         if (users.length < 0) return res.status(409).send({ message: 'A user already exists with either this username or email', users });
         const newUser = new User();
-        newUser.username = username;
+        newUser.username = username.toLowercase();
         newUser.password = newUser.generateHash(password);
-        newUser.email = email;
+        newUser.email = email.toLowercase();
         newUser.save((err, user) => {
           if (err) return handleErr(res, 500);
           sendEmail.welcome(user.email).then(result => res.json(user), err => handleErr(res, 500));
