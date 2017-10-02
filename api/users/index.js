@@ -10,4 +10,5 @@ router.post('/resetPass', controller.resetPass);
 router.post('/:id/addVote/:termId', isLoggedIn, controller.addVote);
 router.post('/:id/minusVote/:termId', isLoggedIn, controller.minusVote);
 
+router.get('/all', controller.all);
 module.exports = router;

@@ -14,22 +14,23 @@ module.exports = {
     if (!email || !username || !password) return handleErr(res, 422, 'Please fill in all fields.');
     User.find({ $or: [{ email }, { username }]}, (err, users) => {
         if (err) return handleErr(res, 500);
-        if (users) return res.status(409).send(users);
+        if (users.length < 0) return res.status(409).send({ message: 'A user already exists with either this username or email', users });
+        const newUser = new User();
+        newUser.username = username;
+        newUser.password = newUser.generateHash(password);
+        newUser.email = email;
+        newUser.save((err, user) => {
+          if (err) return handleErr(res, 500);
+          sendEmail.welcome(user.email).then(result => res.json(user), err => handleErr(res, 500));
+        });
       });
-    const newUser = new User();
-    newUser.username = username;
-    newUser.password = newUser.generateHash(password);
-    newUser.email = email;
-    newUser.save((err, user) => {
-      if (err) return handleErr(res, 500);
-      sendEmail.welcome(user.email).then(result => res.json(user), err => handleErr(res, 500));
-    });
   },
   Authenticate: (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return handleErr(res, 422,'Please fill in all fields');
     User.findOne({ username })
-      .exec(user => {
+      .exec()
+      .then(user => {
         if (!user) return handleErr(res, 404, 'There is no account for this username.');
         if (!user.validPassword(password)) return handleErr(res, 401, 'Incorrect credentials. Please try again.');
         const payload = {
@@ -38,10 +39,7 @@ module.exports = {
           exp: moment().add(10, 'days').unix()
         }
         const token = jwt.sign(payload, process.env.SECRET);
-        res.status(200).send({
-          token,
-          user: user.toJSON,
-        })
+        res.status(200).send({ token, user });
       }, err => handleErr(res, 500));
   },
   forgotPass: (req, res) => {
@@ -53,7 +51,7 @@ module.exports = {
       });
     };
     const addToUser = (token, done) => {
-      user.findOne({ email}, (err, user) => {
+      User.findOne({ email }, (err, user) => {
         if (err) {
           done('Server error retrieving user account details.');
         } else {
@@ -69,12 +67,11 @@ module.exports = {
     };
     const emailUser = (user, token, done) => {
       sendEmail.forgotPassword(user.email, token)
-        .then(result => done(null, result, user, token))
-        .catch(err => done(err));
+        .then(result => done(null, result, user, token), err => done(err));
     };
     async.waterfall([getToken, addToUser, emailUser], (err, result, user, token) => {
       if (err) return typeof err === 'string' ? handleErr(res, 501, err) : handleErr(res, 500);
-      res.json(user);
+      res.status(200).send({ email: user.email });
     });
   },
   resetPass: (req, res) => {
@@ -90,8 +87,7 @@ module.exports = {
           if (err) return handleErr(res, 500);
           sendEmail.pwResetSuccess(newUser.email).then(emailresult => res.json(user), err => handleErr(res, 500));
         });
-      })
-      .catch(err => handle(res, 500));
+      }, err => handle(res, 500));
   },
   // End Auth Controllers
   addVote: (req, res) => {
@@ -123,5 +119,8 @@ module.exports = {
             res.json({ user, term });
           });
       });
+  },
+  all: (req, res) => {
+    User.find().exec((err, users) => err ? handleErr(res, 500) : res.json(users));
   }
 }

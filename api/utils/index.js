@@ -16,7 +16,8 @@ winston.add(winston.transports.Loggly, {
 const sendToUser = (type, to, subject, body) => {
   const from = {
     name: 'Jorge',
-    email: 'jorge@parollakay.com'
+    //email: 'jorge@parollakay.com'
+    email: 'jorge@solcef.org'
   };
   return new Promise((resolve, reject) => {
     const msg = {
@@ -35,10 +36,11 @@ module.exports = {
     return status === 500 ? res.status(500).send({ message: 'Server error with this operation.'}) : res.status(status).send({ message });
   },
   isLoggedIn: function (req, res, next) {
+    const message = 'You are not authorized to view this data.';
     const token = req.body.token || req.query.token || req.headers['x-access-token'];
-    if (!token) return this.handleErr(res, 403, 'You are not authorized to view this data.');
+    if (!token) return res.status(403).send({ message });
     jwt.verify(token, process.env.SECRET, (err, decoded) => {
-      if (err) return this.handleErr(res, 403, 'You are not authorized to view this data.');
+      if (err) return res.status(403).send({ message });
       req.decoded = decoded;
       next();
     })

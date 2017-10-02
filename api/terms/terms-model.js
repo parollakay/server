@@ -28,7 +28,7 @@ const termSchema = new Schema({
   },
   sentences: [sentenceSchema],
   created: {
-    Type: Date,
+    type: Date,
     default: Date.now()
   },
   author: {

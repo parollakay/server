@@ -6,7 +6,7 @@ const app = require('express')(),
 
 require('./config/express')(app, config);
 require('./config/mongoose')(config);
-require('./config/routes');
+require('./config/routes')(app);
 
 app.listen(config.port);
-console.log('Parol Lakay is up and running.');
+console.log('Parol Lakay is up and running on: ' + config.port);

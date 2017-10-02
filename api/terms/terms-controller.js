@@ -8,7 +8,7 @@ module.exports = () => {
       const { text, definition, sentences, author, tags, phonetic } = req.body;
       if (!text || !definition) return handleErr(res, 422, 'You must have at least a [Word] and a [Definition]. Fill those out. - Jorge');
       if (!author) return handleErr(res, 422, 'You must be logged in to add to the dictionary.');
-      const newDef = new Term({ text, definition, sentence, author, tags, phonetic });
+      const newDef = new Term({ text, definition, sentences, author, tags, phonetic });
       newDef.save((err, definition) => {
         if (err) return handleErr(res, 500);
         User.findByIdAndUpdate(author,
@@ -21,8 +21,9 @@ module.exports = () => {
       });
     },
     termSearch: (req, res) => {
+      console.log(req.query);
       const { term } = req.query;
-      Term.find({ text: req.query.term })
+      Term.find({ text: req.query.term.toLowerCase() })
         .populate('author')
         .exec()
         .then(terms => terms ? res.json(terms) : handleErr(res, 404, 'Looks like this word is not in our database. Maybe you should add it. - Jorge'))
