@@ -34,11 +34,11 @@ module.exports = {
     winston.log('Site Error', `${status} - ${message}`);
     return status === 500 ? res.status(500).send({ message: 'Server error with this operation.'}) : res.status(status).send({ message });
   },
-  isLoggedIn: (req, res, next) => {
+  isLoggedIn: function (req, res, next) {
     const token = req.body.token || req.query.token || req.headers['x-access-token'];
-    if (!token) return handleErr(res, 403, 'You are not authorized to view this data.');
+    if (!token) return this.handleErr(res, 403, 'You are not authorized to view this data.');
     jwt.verify(token, process.env.SECRET, (err, decoded) => {
-      if (err) return handleErr(res, 403, 'You are not authorized to view this data.');
+      if (err) return this.handleErr(res, 403, 'You are not authorized to view this data.');
       req.decoded = decoded;
       next();
     })

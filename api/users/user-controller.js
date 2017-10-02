@@ -72,7 +72,10 @@ module.exports = {
         .then(result => done(null, result, user, token))
         .catch(err => done(err));
     };
-    async.waterfall([getToken, addToUser, emailUser], (err, result, user, token));
+    async.waterfall([getToken, addToUser, emailUser], (err, result, user, token) => {
+      if (err) return typeof err === 'string' ? handleErr(res, 501, err) : handleErr(res, 500);
+      res.json(user);
+    });
   },
   resetPass: (req, res) => {
     const { token, password } = req.body;
