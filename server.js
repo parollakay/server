@@ -1,4 +1,4 @@
-require(dotenv).config();
+require('dotenv').config();
 
 const app = require('express')(),
       env = process.env.NODE_ENV || 'development',

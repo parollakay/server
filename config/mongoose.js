@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 module.exports = (config) => {
-  mongoose.connect(config.db);
+  mongoose.connect(config.db, { useMongoClient: true});
   mongoose.Promise = global.Promise;
 
   const db = mongoose.connection;
