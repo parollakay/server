@@ -1,3 +1,6 @@
+const sgMail = require('@sendgrid/mail');
+      sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+      
 const signature = '<br><br>Thank you so much, God Bless you, epi Have a good night!<br><b>Jorge</b><br><small>from wap konn Jorge.. yo bam on ti job!</small>'
 module.exports = {
   welcome: {
@@ -18,5 +21,15 @@ module.exports = {
   pwResetSuccess: {
     subject: 'Password Reset',
     html: `Now... <br> Your password is changed. Good job. ${signature}`
+  },
+  sendToUser: (type, to, subject, body) => {
+    const email = 'jorge@solcef.org';
+    const name = 'Jorge from Parol Lakay'
+    // const email = 'jorge@parollakay.com'
+    const from = { name, email };
+    return new Promise((resolve, reject) => {
+      const msg = { to, from, subject: type.subject, html: type.html }
+      sgMail.send(msg, (err, result) => err ? reject(err) : resolve(result));
+    });
   }
 }

@@ -22,7 +22,7 @@ module.exports = () => {
     },
     termSearch: (req, res) => {
       const { term } = req.query;
-      Term.find({ text: req.query.term.toLowerCase() }).populate('author').exec()
+      Term.find({ text: req.query.term }).populate('author').exec()
         .then(terms => terms ? res.json(terms) : handleErr(res, 404, 'Looks like this word is not in our database. Maybe you should add it. - Jorge'), err => handleErr(res, 500));
     },
     allTerms: (req, res) => {

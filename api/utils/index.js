@@ -1,41 +1,23 @@
 const winston = require('winston');
 require('winston-loggly-bulk');
 
-const jwt = require('jsonwebtoken');
-const sgMail = require('@sendgrid/mail');
-      sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-const emails = require('./emails');
-
+const { hashPass, validPass, authMiddleWare } = require('./passwordHash');
+const { sendToUser, welcome, newDefinition, resetpassword, pwResetSuccess } = require('./emails')
 winston.add(winston.transports.Loggly, { token: process.env.LOGGLY_TOKEN, subdomain: 'parollakay', tags: ['Winston-Nodejs'], json: true });
-
-const sendToUser = (type, to, subject, body) => {
-  const from = { name: 'Jorge', email: 'jorge@parollakay.com' };
-  return new Promise((resolve, reject) => {
-    const msg = { to, from, subject: type.subject, html: type.html }
-    sgMail.send(msg, (err, result) => err ? reject(err) : resolve(result));
-  });
-}
 
 module.exports = {
   handleErr: (res, status, message) => {
     winston.log('Site Error', `${status} - ${message}`);
     return status === 500 ? res.status(500).send({ message: 'Server error with this operation.'}) : res.status(status).send({ message });
   },
-  isLoggedIn: function (req, res, next) {
-    const message = 'You are not authorized to view this data.';
-    const token = req.body.token || req.query.token || req.headers['x-access-token'];
-    if (!token) return res.status(403).send({ message });
-    jwt.verify(token, process.env.SECRET, (err, decoded) => {
-      if (err) return res.status(403).send({ message });
-      req.decoded = decoded;
-      next();
-    })
-  },
+  hash: (password) => hashPass(password),
+  validate: (password, hash) => validPass(password, hash),
+  isLoggedIn: (req, res, next) => authMiddleWare(req, res, next),
   sendEmail: {
-    welcome: to => sendToUser(emails.welcome, to),
-    pwResetSuccess: to => sendToUser(emails.pwResetSuccess, to),
+    welcome: to => sendToUser(welcome, to),
+    pwResetSuccess: to => sendToUser(pwResetSuccess, to),
     newDefinition: (to, term) => {
-      const type = { subject: emails.newDefinition.subject, html: emails.newDefinition.html(term) }
+      const type = { subject: newDefinition.subject, html: newDefinition.html(term) }
       return sendToUser(type, to);
     },
     custom: (to, subject, html) => {
@@ -43,7 +25,7 @@ module.exports = {
       return sendToUser(type, to);
     },
     forgotPassword: (to, token) => {
-      const type = { subject: emails.resetpassword.subject, html: emails.resetpassword.html(token) };
+      const type = { subject: resetpassword.subject, html: resetpassword.html(token) };
       return sendToUser(type, to);
     }
   }

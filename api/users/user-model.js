@@ -1,6 +1,6 @@
 const mongoose = require('mongoose'),
       Schema = mongoose.Schema;
-const bcrypt = require('bcrypt-nodejs');
+const { hash } = require('../utils');
 
 const userSchema = new Schema({
   email: {
@@ -31,20 +31,20 @@ const userSchema = new Schema({
     default: Date.now()
   }
 });
-
+/*
 userSchema.methods.toJSON = function() {
   const user = this.toObject();
   delete user.password;
   return user;
-};
+};*/
 
-userSchema.methods.generateHash = password => {
-  return bcrypt.hashSync(password, bcrypt.genSaltSync(8), null);
-};
-
-userSchema.methods.validPassword = function(password) {
-  return bcrypt.compareSync(password, this.password);
-};
+userSchema.pre('save', async function(next) {
+  try {
+    if (!this.isModified('password')) return next();
+    this.password = await hash(this.password);
+    next();
+  } catch(err) { next(err); }
+});
 
 
 module.exports = mongoose.model('User', userSchema);

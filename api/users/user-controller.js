@@ -2,10 +2,11 @@ const async = require('async');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const moment = require('moment');
-
+const bcrypt = require('bcrypt');
 const User = require('./user-model');
 const Term = require('../terms/terms-model');
-const { handleErr, sendEmail } = require('../utils');
+const { handleErr, sendEmail, validate } = require('../utils');
+const { validPass } = require('../utils/passwordHash')
 
 module.exports = {
   // Auth Stuff
@@ -15,24 +16,23 @@ module.exports = {
     User.find({ $or: [{ email }, { username }]}, (err, users) => {
         if (err) return handleErr(res, 500);
         if (users.length < 0) return res.status(409).send({ message: 'A user already exists with either this username or email', users });
-        const newUser = new User();
-        newUser.username = username.toLowercase();
-        newUser.password = newUser.generateHash(password);
-        newUser.email = email.toLowercase();
+        const newUser = new User({ username, password, email});
         newUser.save((err, user) => {
           if (err) return handleErr(res, 500);
           sendEmail.welcome(user.email).then(result => res.json(user), err => handleErr(res, 500));
         });
       });
   },
-  Authenticate: (req, res) => {
+  Authenticate: async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return handleErr(res, 422,'Please fill in all fields');
     User.findOne({ username })
       .exec()
       .then(user => {
+        const validated = await validPass(password, user.password);
         if (!user) return handleErr(res, 404, 'There is no account for this username.');
-        if (!user.validPassword(password)) return handleErr(res, 401, 'Incorrect credentials. Please try again.');
+        //if (!validPass(password, user.password)) return handleErr(res, 401, 'Incorrect credentials. Please try again.');
+        if (!validated) return handleErr(res, 401, 'Incorrect credentials. Please try again.');
         const payload = {
           iss: 'Parol_lakay',
           sub: user._id,
@@ -80,7 +80,7 @@ module.exports = {
       .exec()
       .then(user => {
         if (!user) return handleErr(res, 403, 'Password reset token is invalid or has expired');
-        user.password = user.generateHash(password);
+        user.password = password;
         user.resetPasswordToken = undefined;
         user.resetPasswordExpires = undefined;
         user.save((err, newUser) => {
