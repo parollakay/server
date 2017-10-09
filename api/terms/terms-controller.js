@@ -26,7 +26,7 @@ module.exports = () => {
         .then(terms => terms ? res.json(terms) : handleErr(res, 404, 'Looks like this word is not in our database. Maybe you should add it. - Jorge'), err => handleErr(res, 500));
     },
     allTerms: (req, res) => {
-      Term.find().populate('author').exec()
+      Term.find().populate('author sentences.author').exec()
         .then(terms => terms ? res.json(terms) : handleErr(res, 404, 'There are no terms found on the database'), err => handleErr(res, 500));
     },
     addSentence: (req, res) => {
