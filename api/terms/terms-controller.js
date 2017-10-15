@@ -31,6 +31,7 @@ module.exports = () => {
     },
     addSentence: (req, res) => {
       const { text, author } = req.body
+      if (!Term.findById(req.params.id)) return handleErr(res, 500);
       Term.findByIdAndUpdate(req.params.id,
         { $push: { sentences: { text, author} }},
         { new:true, safe:true, upsert:true },

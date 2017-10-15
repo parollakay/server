@@ -16,12 +16,18 @@ module.exports = {
         if (err) return handleErr(res, 500);
         if (users.length < 0) return res.status(409).send({ message: 'A user already exists with either this username or email', users });
         const newUser = new User();
-        newUser.username = username.toLowercase();
+        newUser.username = username.toLowerCase();
         newUser.password = newUser.generateHash(password);
-        newUser.email = email.toLowercase();
+        newUser.email = email.toLowerCase();
         newUser.save((err, user) => {
           if (err) return handleErr(res, 500);
-          sendEmail.welcome(user.email).then(result => res.json(user), err => handleErr(res, 500));
+          const payload = {
+            iss: 'Parol_lakay',
+            sub: user._id,
+            exp: moment().add(10, 'days').unix()
+          }
+          const token = jwt.sign(payload, process.env.SECRET);
+          sendEmail.welcome(user.email).then(result => res.status(200).send({ token, user }), err => handleErr(res, 500));
         });
       });
   },

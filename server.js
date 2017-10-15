@@ -1,5 +1,5 @@
 require('dotenv').config();
-
+const Term = require('./api/terms/terms-model');
 const app = require('express')(),
       env = process.env.NODE_ENV || 'development',
       config = require('./config/config')[env];
