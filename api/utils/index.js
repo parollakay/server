@@ -9,7 +9,7 @@ const emails = require('./emails');
 winston.add(winston.transports.Loggly, { token: process.env.LOGGLY_TOKEN, subdomain: 'parollakay', tags: ['Winston-Nodejs'], json: true });
 
 const sendToUser = (type, to, subject, body) => {
-  const from = { name: 'Jorge', email: 'jorge@parollakay.com' };
+  const from = { name: 'Jorge Pierre fom Parol Lakay', email: 'jorge@parollakay.com' };
   return new Promise((resolve, reject) => {
     const msg = { to, from, subject: type.subject, html: type.html }
     sgMail.send(msg, (err, result) => err ? reject(err) : resolve(result));
@@ -17,9 +17,10 @@ const sendToUser = (type, to, subject, body) => {
 }
 
 module.exports = {
-  handleErr: (res, status, message) => {
-    winston.log('Site Error', `${status} - ${message}`);
-    return status === 500 ? res.status(500).send({ message: 'Server error with this operation.'}) : res.status(status).send({ message });
+  handleErr: (res, status, message, data) => {
+    winston.log('Site Error', `${status} - ${message}: ${data}`);
+    console.log('error', status, message, data);
+    return status === 500 ? res.status(500).send({ message: 'Server error with this operation.'}) : res.status(status).send({ message: message });
   },
   isLoggedIn: function (req, res, next) {
     const message = 'You are not authorized to view this data.';

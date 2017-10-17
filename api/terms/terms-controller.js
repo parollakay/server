@@ -15,6 +15,7 @@ module.exports = () => {
           { $push: { 'terms': definition._id }},
           { new: true, upsert: true, safe: true },
           (err, user) => {
+            console.log(err, user);
             if (err) return handleErr(res, 500);
             sendEmail.newDefinition(user.email, text).then(result => res.json(definition), err => handleErr(res, 500));
           });

@@ -7,6 +7,7 @@ router.post('/auth', controller.Authenticate);
 router.post('/forgotPass', controller.forgotPass);
 router.post('/resetPass', controller.resetPass);
 
+router.get('/:id/autoAuth', isLoggedIn, controller.autoAuth);
 router.post('/:id/addVote/:termId', isLoggedIn, controller.addVote);
 router.post('/:id/minusVote/:termId', isLoggedIn, controller.minusVote);
 

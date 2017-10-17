@@ -13,21 +13,21 @@ module.exports = {
     const { email, username, password } = req.body;
     if (!email || !username || !password) return handleErr(res, 422, 'Please fill in all fields.');
     User.find({ $or: [{ email }, { username }]}, (err, users) => {
-        if (err) return handleErr(res, 500);
-        if (users.length < 0) return res.status(409).send({ message: 'A user already exists with either this username or email', users });
+        if (err) return handleErr(res, 500, 'error from finding', err);
+        if (users.length > 0) return res.status(409).send({ message: 'A user already exists with either this username or email', users });
         const newUser = new User();
         newUser.username = username.toLowerCase();
         newUser.password = newUser.generateHash(password);
         newUser.email = email.toLowerCase();
         newUser.save((err, user) => {
-          if (err) return handleErr(res, 500);
+          if (err) return handleErr(res, 500, 'error in saving', err);
           const payload = {
             iss: 'Parol_lakay',
             sub: user._id,
             exp: moment().add(10, 'days').unix()
           }
           const token = jwt.sign(payload, process.env.SECRET);
-          sendEmail.welcome(user.email).then(result => res.status(200).send({ token, user }), err => handleErr(res, 500));
+          sendEmail.welcome(user.email).then(result => res.status(200).send({ token, user }), err => handleErr(res, 500, 'error from emailing', err));
         });
       });
   },
@@ -38,7 +38,7 @@ module.exports = {
       .exec()
       .then(user => {
         if (!user) return handleErr(res, 404, 'There is no account for this username.');
-        if (!user.validPassword(password)) return handleErr(res, 401, 'Incorrect credentials. Please try again.');
+        if (!user.validPassword(password)) return handleErr(res, 403, 'Incorrect credentials. Please try again.');
         const payload = {
           iss: 'Parol_lakay',
           sub: user._id,
@@ -47,6 +47,10 @@ module.exports = {
         const token = jwt.sign(payload, process.env.SECRET);
         res.status(200).send({ token, user });
       }, err => handleErr(res, 500));
+  },
+  autoAuth: (req, res) => {
+    User.findById(req.params.id).exec()
+      .then(user => user ? res.json(user) : handleErr(res, 404, 'User information could not be found.'), err => handleErr(res, 500));
   },
   forgotPass: (req, res) => {
     const { email } = req.body;
