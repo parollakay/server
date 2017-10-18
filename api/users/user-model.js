@@ -3,6 +3,10 @@ const mongoose = require('mongoose'),
 const bcrypt = require('bcrypt-nodejs');
 
 const userSchema = new Schema({
+  newsletter: {
+    type: Boolean,
+    default: false
+  },
   email: {
     type: String,
     required: true,
