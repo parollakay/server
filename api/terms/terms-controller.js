@@ -2,7 +2,13 @@ const Term = require('./terms-model');
 const User = require('../users/user-model');
 const { handleErr, sendEmail } = require('../utils');
 
-module.exports = () => {
+const getPopulatedTerm = (id, res) => {
+  Term.findById(id).populate('author sentences.author').exec().then(term => {
+    return term ? term : handleErr(res, 500);
+  }, err => handleErr(res, 500))
+}
+
+module.exports = function () {
   return {
     newDefinition: (req, res) => {
       const text = req.body.text.toLowerCase();
@@ -17,13 +23,13 @@ module.exports = () => {
           (err, user) => {
             console.log(err, user);
             if (err) return handleErr(res, 500);
-            sendEmail.newDefinition(user.email, text).then(result => res.json(definition), err => handleErr(res, 500));
+            sendEmail.newDefinition(user.email, text).then(result => res.json(definition), err => handleErr(res, 500, 'error sending email', err));
           });
       });
     },
     termSearch: (req, res) => {
       const { term } = req.query;
-      Term.find({ text: req.query.term.toLowerCase() }).populate('author').exec()
+      Term.find({ text: req.query.term.toLowerCase() }).populate('author sentences.author').exec()
         .then(terms => terms ? res.json(terms) : handleErr(res, 404, 'Looks like this word is not in our database. Maybe you should add it. - Jorge'), err => handleErr(res, 500));
     },
     allTerms: (req, res) => {
@@ -38,7 +44,10 @@ module.exports = () => {
         { new:true, safe:true, upsert:true },
         (err, term) => {
           if (err) return handleErr(res, 500);
-          res.json(term);
+          Term.findById(term._id).populate('author sentences.author').exec((newErr, theTerm) => {
+            if (newErr) return handleErr(res, 500, 'Please refresh your browser.');
+            res.json(theTerm);
+          });
         });
     },
     removeSentence: (req, res) => {
@@ -47,6 +56,7 @@ module.exports = () => {
         { safe:true, new:true },
         (err, term) => {
           if (err) return handleErr(res, 500);
+        
           res.json(term);
         });
     }

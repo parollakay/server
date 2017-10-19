@@ -111,7 +111,10 @@ module.exports = {
           { safe:true, upsert:true, new:true },
           (err, term) => {
             if (err) return handleErr(res, 500);
-            res.json({ user, term });
+            Term.findById(term.id).populate('author sentences.author').exec((newErr, theTerm) => {
+              if (newErr) return handleErr(res, 500, 'Please restart your browser');
+              res.json({ user, term: theTerm });
+            });
           })
       })
   },
@@ -126,7 +129,10 @@ module.exports = {
           { safe:true, upsert:true, new:true },
           (err, term) => {
             if (err) return handleErr(res, 500);
-            res.json({ user, term });
+            Term.findById(term.id).populate('author sentences.author').exec((newErr, theTerm) => {
+              if (newErr) return handleErr(res, 500, 'Please restart your browser');
+              res.json({ user, term: theTerm });
+            });
           });
       });
   },

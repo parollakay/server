@@ -46,6 +46,6 @@ module.exports = {
     forgotPassword: (to, token) => {
       const type = { subject: emails.resetpassword.subject, html: emails.resetpassword.html(token) };
       return sendToUser(type, to);
-    }
+    },
   }
 }
