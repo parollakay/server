@@ -8,6 +8,10 @@ module.exports = {
     subject: 'New Definition Added!',
     html: (term) => `<b>Eps!</b><br><br>Your new definition for ${term} has been submitted to <b>Parol Lakay</b>.${signature}`
   },
+  achievementUnlocked: {
+    subject: 'Achievement unlocked!',
+    html: (data) => `With your latest term submission, you have officially unlocked the name ${data.name}! It will show up next to, or under your username on Parol Lakay. Btw, you have ${data.amtLeft} more words until you unlock the next level, good luck! ${signature}`
+  },
   resetpassword: {
     subject: 'Change Password',
     html: (token) => 'You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n' +
@@ -20,3 +24,4 @@ module.exports = {
     html: `Now... <br> Your password is changed. Good job. ${signature}`
   }
 }
+

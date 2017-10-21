@@ -2,10 +2,29 @@ const mongoose = require('mongoose'),
       Schema = mongoose.Schema;
 const bcrypt = require('bcrypt-nodejs');
 
+const badgeSchema =  new Schema({
+  created: {
+    type: Date,
+    default: Date.now()
+  },
+  name: String,
+  description: String,
+  min: Number
+})
+
 const userSchema = new Schema({
   newsletter: {
     type: Boolean,
     default: false
+  },
+  achievements: [badgeSchema],
+  toNextAchievement: {
+    type: Number,
+    default: 0
+  },
+  nextAchievementMin: {
+    type: Number,
+    default: 0
   },
   email: {
     type: String,

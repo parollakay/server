@@ -1,12 +1,15 @@
 const Term = require('./terms-model');
 const User = require('../users/user-model');
-const { handleErr, sendEmail } = require('../utils');
+const { handleErr, sendEmail, getAchievements } = require('../utils');
+
 
 const getPopulatedTerm = (id, res) => {
   Term.findById(id).populate('author sentences.author').exec().then(term => {
     return term ? term : handleErr(res, 500);
   }, err => handleErr(res, 500))
 }
+
+
 
 module.exports = function () {
   return {
@@ -17,18 +20,24 @@ module.exports = function () {
       const newDef = new Term({ text, definition, sentences, author, tags, phonetic });
       newDef.save((err, definition) => {
         if (err) return handleErr(res, 500);
-        User.findByIdAndUpdate(author,
-          { $push: { 'terms': definition._id }},
-          { new: true, upsert: true, safe: true },
-          (err, user) => {
-            console.log(err, user);
-            if (err) return handleErr(res, 500);
+        User.findById(author).exec().then(person => {
+          person.terms.push(definition._id);
+          const user = getAchievements(person);
+          user.save((thisErr, newUser) => {
+            if (thisErr) return handleErr(res, 500);
+            if (newUser.achievements.length > person.achievements.length) { 
+              const data = {
+                name: newUser.achievements[newUser.achievements.length - 1].name,
+                amtLeft: newUser.toNextAchievement
+              }
+              sendEmail.achievement(newUser.email, data);
+            }
             Term.findById(definition._id).populate('author sentences.author').exec((newErr, newDef) => {
               if (newErr) return handleErr(res, 500);
-              sendEmail.newDefinition(user.email, text).then(result => res.json(newDef), err => handleErr(res, 500, 'error sending email', err));
+              sendEmail.newDefinition(newUser.email, text).then(result => res.json(newDef), err => handleErr(res, 500, 'error sending email', err));
             });
-            
-          });
+          })
+        }, e => handleErr(res, 500));
       });
     },
     termSearch: (req, res) => {

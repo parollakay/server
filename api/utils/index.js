@@ -1,6 +1,6 @@
 const winston = require('winston');
 require('winston-loggly-bulk');
-
+const processAchievements = require('./processAchievements');
 const jwt = require('jsonwebtoken');
 const sgMail = require('@sendgrid/mail');
       sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -32,6 +32,7 @@ module.exports = {
       next();
     })
   },
+  getAchievements: (user) => processAchievements.fn(user),
   sendEmail: {
     welcome: to => sendToUser(emails.welcome, to),
     pwResetSuccess: to => sendToUser(emails.pwResetSuccess, to),
@@ -47,5 +48,12 @@ module.exports = {
       const type = { subject: emails.resetpassword.subject, html: emails.resetpassword.html(token) };
       return sendToUser(type, to);
     },
+    achievement: (to, data) => {
+      const type = {
+        subject: emails.achievementUnlocked.subject,
+        html: emails.achievementUnlocked.html(data)
+      }
+      return sendToUser(type, to);
+    }
   }
 }
