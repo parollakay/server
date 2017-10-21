@@ -23,18 +23,32 @@ module.exports = function () {
           (err, user) => {
             console.log(err, user);
             if (err) return handleErr(res, 500);
-            sendEmail.newDefinition(user.email, text).then(result => res.json(definition), err => handleErr(res, 500, 'error sending email', err));
+            Term.findById(definition._id).populate('author sentences.author').exec((newErr, newDef) => {
+              if (newErr) return handleErr(res, 500);
+              sendEmail.newDefinition(user.email, text).then(result => res.json(newDef), err => handleErr(res, 500, 'error sending email', err));
+            });
+            
           });
       });
     },
     termSearch: (req, res) => {
-      const { term } = req.query;
-      Term.find({ text: req.query.term.toLowerCase() }).populate('author sentences.author').exec()
-        .then(terms => terms ? res.json(terms) : handleErr(res, 404, 'Looks like this word is not in our database. Maybe you should add it. - Jorge'), err => handleErr(res, 500));
+      const { term, letter } = req.query;
+      console.log(req.query);
+      const query = term || new RegExp('^' + letter,'i');
+      if (!term && !letter) return handleErr(res, 403, 'Incorrect search query. You did something wrong men, come on.');
+      Term.find({ text: query }).populate('author sentences.author').sort({ upvotes: -1 }).exec()
+        .then(terms => terms ? res.json(terms) : handleErr(res, 404, 'Looks like this word is not in our database. Maybe you should add it.'), err => handleErr(res, 500));
     },
     allTerms: (req, res) => {
-      Term.find().populate('author sentences.author').exec()
-        .then(terms => terms ? res.json(terms) : handleErr(res, 404, 'There are no terms found on the database'), err => handleErr(res, 500));
+      Term.find().populate('author sentences.author').sort({ created: -1 }).exec()
+        .then(terms => terms.length > 0 ? res.json(terms) : handleErr(res, 404, 'There are no terms found on the database'), err => handleErr(res, 500));
+    },
+    tagSearch: (req, res) => {
+      const { tag } = req.query;
+      console.log(tag);
+      if (!tag) return handleErr(res, 400, `Bad request, please try again. Ou pa kon sa'w ap fe?`);
+      Term.find({ tags: tag}).populate('author sentences.author').sort({ upvotes: -1 }).exec()
+        .then(terms => terms.length > 0 ? res.json(terms) : handleErr(res, 404, `There are no terms with this tag.`), err => handleErr(res, 500));
     },
     addSentence: (req, res) => {
       const { text, author } = req.body
@@ -49,6 +63,21 @@ module.exports = function () {
             res.json(theTerm);
           });
         });
+    },
+    addIncidence: (req, res) => {
+      const { user } = req.body;
+      Term.findById(req.params.id).populate('author sentences.author').exec().then(term => {
+        console.log(term.incidences);
+        if (!term) return handleErr(res, 404, 'Error retrieving term to report');
+        if (term.incidences.includes(user)) return handleErr(res, 400, 'You have already reported this term.');
+        term.incidences.push(user);
+        term.save((err, newTerm) => {
+          if (err) return handleErr(res, 500);
+          newTerm.author = term.author;
+          newTerm.sentences = term.sentences;
+          res.json(newTerm);
+        })
+      }, err => handleErr(res, 500));
     },
     removeSentence: (req, res) => {
       Term.findByIdAndUpdate(req.params.id,

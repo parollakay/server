@@ -6,6 +6,7 @@ const moment = require('moment');
 const User = require('./user-model');
 const Term = require('../terms/terms-model');
 const { handleErr, sendEmail } = require('../utils');
+const { MEMBER, WEEKLYWORD, addToList } = require('../utils/mailchimp');
 
 module.exports = {
   // Auth Stuff
@@ -27,7 +28,12 @@ module.exports = {
             exp: moment().add(10, 'days').unix()
           }
           const token = jwt.sign(payload, process.env.SECRET);
-          sendEmail.welcome(user.email).then(result => res.status(200).send({ token, user }), err => handleErr(res, 500, 'error from emailing', err));
+          sendEmail.welcome(user.email)
+            .then(result => addToList(user.email, MEMBER)
+              .then(() => res.status(200).send({ token, user }), e => {
+                if (e.status === 400) return res.status(200).send({ token, user});
+                return handleErr(res, e.status, e.detail, e);
+              }), err => handleErr(res, 500, 'error from emailing', err));    
         });
       });
   },
@@ -138,5 +144,26 @@ module.exports = {
   },
   all: (req, res) => {
     User.find().exec((err, users) => err ? handleErr(res, 500) : res.json(users));
+  },
+  subscibeToWeeklyList: (req, res) => {
+    const { email } = req.body;
+    console.log(req.body);
+    User.findOne({ email }).exec().then(user => {
+      console.log(user);
+      addToList(email, WEEKLYWORD).then(() => {
+        if (user) {
+          user.newsletter = true;
+          user.save((err, data) => {
+            if (err) return handleErr(res, 500, 'User added to list, but error trying to save user as subscribed in database.', err);
+            res.json(data);
+          })
+        } else {
+          res.status(200).send({ message: 'Subscribed successfuly!'});
+        }        
+      }, e => {
+        if (e.status !== 400) return handleErr(res, e.status, e.detail , e);
+        res.status(400).send({ message: `You're already subscribed.`}); 
+      });
+    }, err => handleErr(res, 500));
   }
 }

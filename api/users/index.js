@@ -6,6 +6,7 @@ router.post('/new', controller.register);
 router.post('/auth', controller.Authenticate);
 router.post('/forgotPass', controller.forgotPass);
 router.post('/resetPass', controller.resetPass);
+router.post('/subToWeeklyWord', controller.subscibeToWeeklyList);
 
 router.get('/:id/autoAuth', isLoggedIn, controller.autoAuth);
 router.post('/:id/addVote/:termId', isLoggedIn, controller.addVote);

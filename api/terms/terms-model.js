@@ -13,6 +13,7 @@ const sentenceSchema = new Schema({
   }
 })
 
+
 const termSchema = new Schema({
   live: {
     type: Boolean,
@@ -26,6 +27,10 @@ const termSchema = new Schema({
     type: String,
     required: true
   },
+  incidences: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
   sentences: [sentenceSchema],
   created: {
     type: Date,
