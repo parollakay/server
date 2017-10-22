@@ -1,0 +1,4 @@
+1. On new term submission:
+  a. Make New Term become async function
+  b. Handle achievement processing inside function
+  c. return both the user and the term.

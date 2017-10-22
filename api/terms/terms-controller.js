@@ -1,6 +1,7 @@
 const Term = require('./terms-model');
 const User = require('../users/user-model');
 const { handleErr, sendEmail, getAchievements } = require('../utils');
+const async = require('async');
 
 
 const getPopulatedTerm = (id, res) => {
@@ -16,28 +17,55 @@ module.exports = function () {
     newDefinition: (req, res) => {
       const text = req.body.text.toLowerCase();
       const { definition, sentences, author, tags, phonetic } = req.body;
+      
       if (!text || !definition) return handleErr(res, 422, 'You must have at least a [Word] and a [Definition]. Fill those out. - Jorge');
       const newDef = new Term({ text, definition, sentences, author, tags, phonetic });
-      newDef.save((err, definition) => {
-        if (err) return handleErr(res, 500);
+      const achievements = require('../utils/achievements');
+
+      const saveNewTerm = done => {
+        newDef.save((err, word) => {
+          if (err) return done('Could not save this word.');
+          done(null, word);
+        });
+      }
+
+      const processUser = (word, done) => {
         User.findById(author).exec().then(person => {
-          person.terms.push(definition._id);
-          const user = getAchievements(person);
-          user.save((thisErr, newUser) => {
-            if (thisErr) return handleErr(res, 500);
-            if (newUser.achievements.length > person.achievements.length) { 
-              const data = {
-                name: newUser.achievements[newUser.achievements.length - 1].name,
-                amtLeft: newUser.toNextAchievement
+          person.terms.push(word._id);
+          const numTerms = person.terms.length;
+          const achievementLength = person.achievements.length;
+          if (numTerms <= 1804 && person.nextAchievementMin <= numTerms) {
+            const newAchievement = achievements.get(person.nextAchievementMin);
+            person.achievements.push(newAchievement);
+            person.nextAchievementMin = achievements.next(newAchievement.min);
+            person.toNextAchievement = achievements.next(newAchievement.min) - numTerms;
+          }          
+          person.save((err, user) => {
+            if (err) return done('Word has been saved, but we ran into a server error giving you credit.');
+            sendEmail.newDefinition(user.email, text).then(success => {
+              if (user.achievements.length > achievementLength) { 
+                const data = {
+                  name: user.achievements[user.achievements.length - 1].name,
+                  amtLeft: user.toNextAchievement
+                }
+                sendEmail.achievement(user.email, data).then(result => {
+                  done(null, user, word);
+                }, error => done('Word has been saved, Also you got a new achievement, but we couldnt email you about it.'))
+              } else {
+                done(null, user, word);
               }
-              sendEmail.achievement(newUser.email, data);
-            }
-            Term.findById(definition._id).populate('author sentences.author').exec((newErr, newDef) => {
-              if (newErr) return handleErr(res, 500);
-              sendEmail.newDefinition(newUser.email, text).then(result => res.json(newDef), err => handleErr(res, 500, 'error sending email', err));
-            });
-          })
-        }, e => handleErr(res, 500));
+            }, e => done('Word has been saved, but we ran into a server error emailing you about it.'));
+          });
+        }, e => done('Word has been saved, but we ran into a server error giving you credit.'));
+      }
+
+      const getPopulated = (user, word, done) => {
+        Term.findById(word._id).populate('author sentences.author').exec().then(defined => done(null, defined, user), error => done('Word added, but you will need to refresh your browser.'));
+      }
+
+      async.waterfall([ saveNewTerm, processUser, getPopulated ], (err, defined, user) => {
+        if (err) return handleErr(res, 400, err, err);
+        res.json({ defined, user })
       });
     },
     termSearch: (req, res) => {

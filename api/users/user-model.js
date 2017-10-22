@@ -20,11 +20,11 @@ const userSchema = new Schema({
   achievements: [badgeSchema],
   toNextAchievement: {
     type: Number,
-    default: 0
+    default: 1
   },
   nextAchievementMin: {
     type: Number,
-    default: 0
+    default: 1
   },
   email: {
     type: String,
