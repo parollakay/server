@@ -23,6 +23,7 @@ module.exports = {
     return status === 500 ? res.status(500).send({ message: 'Server error with this operation.'}) : res.status(status).send({ message: message });
   },
   isLoggedIn: function (req, res, next) {
+    console.log(req.headers['x-access-token']);
     const message = 'You are not authorized to view this data.';
     const token = req.body.token || req.query.token || req.headers['x-access-token'];
     if (!token) return res.status(403).send({ message });

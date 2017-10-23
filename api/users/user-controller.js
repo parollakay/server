@@ -165,5 +165,16 @@ module.exports = {
         res.status(400).send({ message: `You're already subscribed.`}); 
       });
     }, err => handleErr(res, 500));
+  },
+  changePassword: (req, res) => {
+    const { current, password } = req.body;
+    User.findById(req.params.id).exec().then(user => {
+      if (!user.validPassword(current)) return handleErr(res, 401, 'Incorrect password. Try again.');
+      user.password = user.generateHash(password);
+      user.save((err, data) => {
+        if (err) return handleErr(res, 500);
+        res.json(data);
+      });
+    }, e => handleErr(res, 500));
   }
 }

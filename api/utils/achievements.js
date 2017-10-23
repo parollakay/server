@@ -2,7 +2,7 @@ module.exports = {
   data: [
     {
       min: 1,
-      name: 'Blage',
+      name: 'Boat',
       description: 'Submitted your first definition.'
     },
     {

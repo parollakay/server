@@ -15,6 +15,7 @@ const getPopulatedTerm = (id, res) => {
 module.exports = function () {
   return {
     newDefinition: (req, res) => {
+      console.log(req.headers);
       const text = req.body.text.toLowerCase();
       const { definition, sentences, author, tags, phonetic } = req.body;
       

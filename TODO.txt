@@ -2,3 +2,10 @@
   a. Make New Term become async function
   b. Handle achievement processing inside function
   c. return both the user and the term.
+2. Emails
+  a. restyle emails to look better
+  b. New badge email, the count to next level is wrong... negative number right now.
+3. Some way to receive contacts from the website
+4. Achievements
+  a. They seem to be earning one for each submission... make sure it goes right.
+  b. Change descriptions to be something that can be displayed to explain what they just did.
