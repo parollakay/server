@@ -106,6 +106,12 @@ module.exports = {
       }, err => handle(res, 500));
   },
   // End Auth Controllers
+  populatedUser: (req, res) => {
+    User.findById(req.params.id).populate('terms upvotes').exec((err, user) => {
+      if (err) return handleErr(res, 500);
+      return user ? res.json(user) : handleErr(res, 404, 'Could not locate user information');
+    });
+  },
   addVote: (req, res) => {
     User.findByIdAndUpdate(req.params.id,
       { $push: { 'upvotes': req.params.termId }},
