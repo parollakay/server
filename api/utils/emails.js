@@ -1,8 +1,8 @@
-const signature = '<br><br>Thank you so much, God Bless you, epi Have a good night!<br><b>Jorge</b><br><small>from wap konn Jorge.. yo bam on ti job!</small>'
+const signature = '<br><br>Thank you so much, God Bless you, epi Have a good night!<br><b>Jorge Pierre</b><br><small>from wap konn Jorge.. Yo bam on ti job!</small>'
 module.exports = {
   welcome: {
     subject: 'Welcome To Parol Lakay!',
-    html: `Now... you are a member of <b>Parol Lakay</b>.<br><br>Ok, lemme tell you whats happen now... you can add Words, Definitions, Sentences, and even voté on everything. ok? ${signature}`
+    html: `Now... you are a member of <b>Parol Lakay</b>.<br><br>Ok, lemme tell you whats happen now... you can add Termss, Definitions, Sentences, and even voté on everything. ok? <br /><br /> Go ahead, come back to us here: http://parollakay.com ${signature}`
   },
   newDefinition: {
     subject: 'New Definition Added!',
@@ -10,7 +10,7 @@ module.exports = {
   },
   achievementUnlocked: {
     subject: 'Achievement unlocked!',
-    html: (data) => `With your latest term submission, you have officially unlocked the name ${data.name}! It will show up next to, or under your username on Parol Lakay. Btw, you have ${data.amtLeft} more words until you unlock the next level, good luck! ${signature}`
+    html: (data) => `With your latest term submission, you have officially unlocked the name ${data.name}! It will show up next to, or under your username on Parol Lakay. Good luck unlocking the next level! ${signature}`
   },
   resetpassword: {
     subject: 'Change Password',
@@ -21,7 +21,7 @@ module.exports = {
   },
   pwResetSuccess: {
     subject: 'Password Reset',
-    html: `Now... <br> Your password is changed. Good job. ${signature}`
+    html: `Now... <br> Your password is changed. This is to confirm you have a new password now. ${signature}`
   }
 }
 

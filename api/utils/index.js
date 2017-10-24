@@ -11,7 +11,7 @@ winston.add(winston.transports.Loggly, { token: process.env.LOGGLY_TOKEN, subdom
 const sendToUser = (type, to, subject, body) => {
   const from = { name: 'Jorge Pierre fom Parol Lakay', email: 'jorge@parollakay.com' };
   return new Promise((resolve, reject) => {
-    const msg = { to, from, subject: type.subject, html: type.html }
+    const msg = { to, from, subject: type.subject, html: type.html, templateId: 'd57ed644-ae99-4e6e-96ea-4d6c34b867dc' }
     sgMail.send(msg, (err, result) => err ? reject(err) : resolve(result));
   });
 }
