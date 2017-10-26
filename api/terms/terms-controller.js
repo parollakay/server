@@ -78,7 +78,7 @@ module.exports = function () {
         .then(terms => terms ? res.json(terms) : handleErr(res, 404, 'Looks like this word is not in our database. Maybe you should add it.'), err => handleErr(res, 500));
     },
     allTerms: (req, res) => {
-      Term.find().populate('author sentences.author').sort({ created: -1 }).exec()
+      Term.find().populate('author sentences.author').sort({ created: 'desc'}).exec()
         .then(terms => terms.length > 0 ? res.json(terms) : handleErr(res, 404, 'There are no terms found on the database'), err => handleErr(res, 500));
     },
     tagSearch: (req, res) => {

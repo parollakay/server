@@ -40,7 +40,7 @@ module.exports = {
   Authenticate: (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return handleErr(res, 422,'Please fill in all fields');
-    User.findOne({ username })
+    User.findOne({ username: username.toLowerCase() })
       .exec()
       .then(user => {
         if (!user) return handleErr(res, 404, 'There is no account for this username.');
