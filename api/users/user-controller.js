@@ -360,8 +360,7 @@ module.exports = {
         });
       });
   },
-  saveTerm: async (req, res) => {
-    console.log(req.params, req.body);
+  saveTerm: (req, res) => {
     const { term, note } = req.body;
     if (!term) return handleErr(res, 400, 'You may need to restart your browser before you can save this term.');    
     User.findById(req.params.id).exec().then(user => {
