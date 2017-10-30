@@ -9,7 +9,7 @@ const emails = require('./emails');
 winston.add(winston.transports.Loggly, { token: process.env.LOGGLY_TOKEN, subdomain: 'parollakay', tags: ['Winston-Nodejs'], json: true });
 
 const sendToUser = (type, to, subject, body) => {
-  const from = { name: 'Jorge Pierre fom Parol Lakay', email: 'jorge@parollakay.com' };
+  const from = { name: 'Parol Lakay', email: 'jorge@parollakay.com' };
   return new Promise((resolve, reject) => {
     const msg = { to, from, subject: type.subject, html: type.html, templateId: 'd57ed644-ae99-4e6e-96ea-4d6c34b867dc' }
     sgMail.send(msg, (err, result) => err ? reject(err) : resolve(result));
@@ -23,7 +23,6 @@ module.exports = {
     return status === 500 ? res.status(500).send({ message: 'Server error with this operation.'}) : res.status(status).send({ message: message });
   },
   isLoggedIn: function (req, res, next) {
-    console.log(req.headers['x-access-token']);
     const message = 'You are not authorized to view this data.';
     const token = req.body.token || req.query.token || req.headers['x-access-token'];
     if (!token) return res.status(403).send({ message });
@@ -55,6 +54,8 @@ module.exports = {
         html: emails.achievementUnlocked.html(data)
       }
       return sendToUser(type, to);
-    }
+    },
+    liked: (to, data) => sendToUser(emails.notify_term_like(data), to),
+    sentenceAdded: (to, data) => sendToUser(emails.notify_sentence_added(data), to)
   }
 }

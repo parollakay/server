@@ -1,0 +1,23 @@
+On new term submission:
+  ✔ Make New Term become async function @done (10/26/2017, 4:35:51 PM)
+  ✔ Handle achievement processing inside function @done (10/26/2017, 4:35:56 PM)
+  ✔ return both the user and the term. @done (10/26/2017, 4:35:58 PM)
+Emails:
+  ✔ restyle emails to look better @done (10/26/2017, 4:35:59 PM)
+  ✔ New badge email, the count to next level is wrong... negative number right now. @done (10/26/2017, 4:36:02 PM)
+☐ Some way to receive contacts from the website
+Achievements:
+  ✔ They seem to be earning one for each submission... make sure it goes right. @done (10/26/2017, 4:36:05 PM)
+  ☐ Change descriptions to be something that can be displayed to explain what they just did.
+Users:
+  ☐ Add Notifications to model
+  ☐ Login, do not allow if account is not active
+  ☐ Add way to clear Notifications
+Admin:
+  ☐ Add admin prefunction
+  ☐ Add way to delete Term
+  ☐ Add way to delete sentence
+  ☐ Add way to make term inactive
+  ☐ Make inactive terms never send to client
+  ☐ Add way to send email to user
+  ☐ Add way to make user inactive/active

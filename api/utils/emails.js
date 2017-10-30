@@ -1,4 +1,5 @@
-const signature = '<br><br>Thank you so much, God Bless you, epi Have a good night!<br><b>Jorge Pierre</b><br><small>from wap konn Jorge.. Yo bam on ti job!</small>'
+const signature = '<br><br>Thank you so much, God Bless you, epi Have a good night!<br><b>Jorge Pierre</b><br><small>from wap konn Jorge.. Yo bam on ti job!</small>';
+const notificationSetting = `<br><small>btw, you can edit how you receive these notifications in your Account settings.</small>`
 module.exports = {
   welcome: {
     subject: 'Welcome To Parol Lakay!',
@@ -22,6 +23,18 @@ module.exports = {
   pwResetSuccess: {
     subject: 'Password Reset',
     html: `Now... <br> Your password is changed. This is to confirm you have a new password now. ${signature}`
+  },
+  notify_term_like: data => {
+    return {
+      subject: `Someone Liked Your Definition for ${data.term.text}`,
+      html: `${data.user.username} just liked your definition for ${data.term.text}. Looks like you really know the language after all huh? Keep it up. ${signature} ${notificationSetting}`
+    }
+  },
+  notify_sentence_added: data => {
+    return {
+      subject: `Someone Used Your Definition in an Example.`,
+      html: `${data.user.username} just used your definition for <a href="https://parollakay.com/search?term=${data.term.text}">${data.term.text}</a> in a sentence! ${signature} ${notificationSetting}`
+    }
   }
 }
 

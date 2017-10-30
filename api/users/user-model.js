@@ -12,7 +12,33 @@ const badgeSchema =  new Schema({
   min: Number
 })
 
+const notificationSchema = new Schema({
+  created: {
+    type: Date,
+    default: new Date
+  },
+  text: String,
+  url: String,
+  read: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const savedTermSchema = new Schema({
+  created: {
+    type: Date,
+    default: new Date
+  },
+  term: {
+    type: Schema.Types.ObjectId,
+    ref: 'Term'
+  },
+  note: String
+});
+
 const userSchema = new Schema({
+  savedTerms: [savedTermSchema],
   newsletter: {
     type: Boolean,
     default: false
@@ -46,6 +72,21 @@ const userSchema = new Schema({
     type: Boolean,
     default: true
   },
+  notifications: [notificationSchema],
+  notificationSettings: {
+    likes: {
+      type: Boolean,
+      default: true
+    },
+    sentences: {
+      type: Boolean,
+      default: true
+    },
+    achievements: {
+      type: Boolean,
+      default: true
+    }
+  },
   terms: [{ type: Schema.Types.ObjectId, ref: 'Term'}],
   upvotes: [{ type: Schema.Types.ObjectId, ref: 'Term'}],
   resetPasswordToken: String,
@@ -69,5 +110,15 @@ userSchema.methods.validPassword = function(password) {
   return bcrypt.compareSync(password, this.password);
 };
 
+// Remove notifications that have been read.
+userSchema.pre('save', function (next) {
+  const user = this;
+  if (!user.isModified('notifications')) return next();
+  const NewNotifications = user.notifications.filter((notification) => {
+    return !notification.read;
+  });
+  user.notifications = NewNotifications;
+  next();
+});
 
 module.exports = mongoose.model('User', userSchema);

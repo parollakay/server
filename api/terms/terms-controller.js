@@ -10,7 +10,13 @@ const getPopulatedTerm = (id, res) => {
   }, err => handleErr(res, 500))
 }
 
+const populateOptions = [
+  { path: 'terms'},
+  { path: 'upvotes'},
+  { path: 'savedTerms.term'}
+];
 
+const titleCase = (str) => str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
 
 module.exports = function () {
   return {
@@ -36,26 +42,35 @@ module.exports = function () {
           const numTerms = person.terms.length;
           const achievementLength = person.achievements.length;
           if (numTerms <= 1804 && person.nextAchievementMin <= numTerms) {
+            
             const newAchievement = achievements.get(person.nextAchievementMin);
+            const notification = {
+              text: `You just unlocked a new Achievement: ${newAchievement.name}`,
+              url: `/myAcount`
+            }
             person.achievements.push(newAchievement);
             person.nextAchievementMin = achievements.next(newAchievement.min);
             person.toNextAchievement = achievements.next(newAchievement.min) - numTerms;
+            person.notifications.push(notification);
           }          
           person.save((err, user) => {
             if (err) return done('Word has been saved, but we ran into a server error giving you credit.');
-            sendEmail.newDefinition(user.email, text).then(success => {
-              if (user.achievements.length > achievementLength) { 
-                const data = {
-                  name: user.achievements[user.achievements.length - 1].name,
-                  amtLeft: user.toNextAchievement
+            User.populate(user, populateOptions, (traka, moun) => {
+              if (traka) return done('Please restart your browser');
+              sendEmail.newDefinition(user.email, text).then(success => {
+                if (user.achievements.length > achievementLength) { 
+                  const data = {
+                    name: user.achievements[user.achievements.length - 1].name,
+                    amtLeft: user.toNextAchievement
+                  }
+                  if (!user.notificationSettings.achievements) return done(null,moun, word);
+                  sendEmail.achievement(user.email, data).then(result => done(null,moun, word), error => done('Word has been saved, Also you got a new achievement, but we couldnt email you about it.'))
+                } else {
+                  done(null,moun, word);
                 }
-                sendEmail.achievement(user.email, data).then(result => {
-                  done(null, user, word);
-                }, error => done('Word has been saved, Also you got a new achievement, but we couldnt email you about it.'))
-              } else {
-                done(null, user, word);
-              }
-            }, e => done('Word has been saved, but we ran into a server error emailing you about it.'));
+              }, e => done('Word has been saved, but we ran into a server error emailing you about it.'));
+            })
+            
           });
         }, e => done('Word has been saved, but we ran into a server error giving you credit.'));
       }
@@ -75,7 +90,7 @@ module.exports = function () {
       const query = term || new RegExp('^' + letter,'i');
       if (!term && !letter) return handleErr(res, 403, 'Incorrect search query. You did something wrong men, come on.');
       Term.find({ text: query }).populate('author sentences.author').sort({ upvotes: -1 }).exec()
-        .then(terms => terms ? res.json(terms) : handleErr(res, 404, 'Looks like this word is not in our database. Maybe you should add it.'), err => handleErr(res, 500));
+        .then(terms => terms.length > 0 ? res.json(terms) : handleErr(res, 404, 'Looks like this word is not in our database. Maybe you should add it.'), err => handleErr(res, 500));
     },
     allTerms: (req, res) => {
       Term.find().populate('author sentences.author').sort({ "_id" : -1}).exec()
@@ -91,16 +106,48 @@ module.exports = function () {
     addSentence: (req, res) => {
       const { text, author } = req.body
       if (!Term.findById(req.params.id)) return handleErr(res, 500);
-      Term.findByIdAndUpdate(req.params.id,
-        { $push: { sentences: { text, author} }},
-        { new:true, safe:true, upsert:true },
-        (err, term) => {
-          if (err) return handleErr(res, 500);
-          Term.findById(term._id).populate('author sentences.author').exec((newErr, theTerm) => {
-            if (newErr) return handleErr(res, 500, 'Please refresh your browser.');
-            res.json(theTerm);
+      const AddToterm = done => {
+        Term.findByIdAndUpdate(req.params.id,
+          { $push: { sentences: { text, author} }},
+          { new:true, safe:true, upsert:true },
+          (err, term) => {
+            if (err) return done({ message: 'Server error Adding this sentecece please try again.', data: err });
+            Term.findById(term._id).populate('author sentences.author').exec((newErr, theTerm) => {
+              if (newErr) return done({ message: 'Sentence added, please restart your browser.', data: newErr });
+              done(null, theTerm);
+            });
           });
-        });
+      }
+      const NotifyAuthor = (term, done) => {
+        if (author == term.author._id) return done(null, term.author, term);
+        User.findById(term.author._id).exec().then(creator => {
+          const notification = {
+            text: `${creator.username} used your term '${titleCase(term.text)}' in a sentence.`,
+            url: `/search?term=${term.text}`
+          }
+          creator.notifications.push(notification);
+          creator.save((err, moun) => {
+            if (err) return done({ message: 'Sentence Added, but you may need to restart your browser.', data: err });
+            term.text = titleCase(term.text);
+            const data = {
+              term,
+              user: moun,
+            }
+            if (!moun.notificationSettings.sentences) return done(null, moun, term);
+            sendEmail.sentenceAdded(moun.email, data).then(() => done(null, moun, term), problem => done({ message: 'Sentence added, but you may need to restart your browser.', data: problem }));
+          });
+        }, e => done({ message: 'Sentence added, you may have to restart your browser.', data: e }));
+      }
+
+      async.waterfall([
+        AddToterm,
+        NotifyAuthor
+      ], (err, moun, term) => {
+        if (err) return handleErr(res, 503, err.message, err.data);
+        res.json(term);
+      })
+
+
     },
     addIncidence: (req, res) => {
       const { user } = req.body;
