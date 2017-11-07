@@ -32,6 +32,12 @@ module.exports = {
       next();
     })
   },
+  isAdmin: (req, res, next) => {
+    const message = 'You must be an admin to access this data.';
+    const { role } = req.decoded;
+    if (role !== 'super' && role !== 'admin') return res.status(403).send({ message });
+    next();
+  },
   getAchievements: (user) => processAchievements.fn(user),
   sendEmail: {
     welcome: to => sendToUser(emails.welcome, to),

@@ -38,6 +38,10 @@ const savedTermSchema = new Schema({
 });
 
 const userSchema = new Schema({
+  created: {
+    type: Date,
+    default: Date.now()
+  },
   savedTerms: [savedTermSchema],
   newsletter: {
     type: Boolean,

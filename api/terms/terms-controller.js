@@ -20,6 +20,12 @@ const titleCase = (str) => str.replace(/\w\S*/g, function(txt){return txt.charAt
 
 module.exports = function () {
   return {
+    singleTerm: (req, res) => {
+      Term.findById(req.params.id, (err, term) => {
+        if (err) return handleErr(res, 500);
+        return term ? res.json(term) : handleErr(res, 404, 'That term does not exist.');
+      });
+    },
     newDefinition: (req, res) => {
       console.log(req.headers);
       const text = req.body.text.toLowerCase();
@@ -102,6 +108,14 @@ module.exports = function () {
       if (!tag) return handleErr(res, 400, `Bad request, please try again. Ou pa kon sa'w ap fe?`);
       Term.find({ tags: tag}).populate('author sentences.author').sort({ upvotes: -1 }).exec()
         .then(terms => terms.length > 0 ? res.json(terms) : handleErr(res, 404, `There are no terms with this tag.`), err => handleErr(res, 500));
+    },
+    getReported: (req, res) => {
+      Term.find({ 'incidences.0': { $exists: true }}).populate('author sentences.author incidences').limit(5).exec()
+        .then(terms => terms.length > 0 ? res.json(terms) : handleErr(res, 404, 'None found for this search'), e => handleErr(res, 500));
+    },
+    getRecent: (req, res) => {
+      Term.find().sort({ "_id": -1 }).limit(5).populate('author sentences.author incidences').exec()
+        .then(terms => terms.length > 0 ? res.json(terms) : handleErr(res, 404, 'None found for this search'), e => handleErr(res, 500));
     },
     addSentence: (req, res) => {
       const { text, author } = req.body

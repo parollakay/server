@@ -1,6 +1,6 @@
 const controller = require('./user-controller');
 const router = require('express').Router();
-const { isLoggedIn } = require('../utils');
+const { isLoggedIn, isAdmin } = require('../utils');
 
 router.post('/new', controller.register);
 router.post('/auth', controller.Authenticate);
@@ -14,6 +14,9 @@ router.post('/:id/changePassword', isLoggedIn, controller.changePassword);
 router.get('/:id/autoAuth', isLoggedIn, controller.autoAuth);
 router.post('/:id/addVote/:termId', isLoggedIn, controller.addVote);
 router.post('/:id/minusVote/:termId', isLoggedIn, controller.minusVote);
+router.post('/:id/makeSuper', isLoggedIn, controller.makeSuper);
+
+router.get('/latestUsers', isLoggedIn, isAdmin, controller.getRecent);
 
 router.put('/:id/notification_read/:notification', isLoggedIn, controller.markNotificationRead);
 router.delete('/:id/notification_delete/:notification', isLoggedIn, controller.deleteNotification);

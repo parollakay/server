@@ -32,6 +32,7 @@ module.exports = {
           if (err) return handleErr(res, 500, 'error in saving', err);
           const payload = {
             iss: 'Parol_lakay',
+            role: user.role,
             sub: user._id,
             exp: moment().add(10, 'days').unix()
           }
@@ -59,6 +60,7 @@ module.exports = {
         const payload = {
           iss: 'Parol_lakay',
           sub: user._id,
+          role: user.role,
           exp: moment().add(10, 'days').unix()
         }
         const token = jwt.sign(payload, process.env.SECRET);
@@ -121,6 +123,10 @@ module.exports = {
       }, err => handle(res, 500));
   },
   // End Auth Controllers
+  getRecent: (req, res) => {
+    User.find().sort({ '_id': -1 }).limit(5).exec()
+      .then(users => res.json(users), e => handleErr(res, 500));
+  },
   markNotificationRead: (req, res) => {
     User.findOneAndUpdate(
       { _id: req.params.id, 'notifications._id': req.params.notification },
@@ -391,5 +397,19 @@ module.exports = {
   },
   addNoteToSavedTerm: (req, res) => {},
   editSavedTermNote: (req, res) => {},
-  deleteSavedTermNote: (req, res) => {}
+  deleteSavedTermNote: (req, res) => {},
+  makeSuper: (req, res) => {
+    User.findById(req.params.id).exec().then(person => {
+      if (!person) return handleErr(res, 404, 'That user account cannot be found.');
+      if (person.username !== 'clervius') return handleErr(res, 401, 'Your account must be made into an Admin by an existing admin.');
+      person.role = 'super';
+      person.save((err, user) => {
+        if (err) return handleErr(res, 500);
+        User.populate(user, populateOptions, (newErr, moun) => {
+          if (newErr) return handleErr(res, 503, 'Please restart your browser.');
+          res.json(moun);
+        });
+      })
+    }, e => handleErr(res, 500));
+  }
 }
