@@ -32,5 +32,5 @@ router.post('/:id/unsaveTerm/:term', isLoggedIn, controller.unsaveTerm);
 // router.put('/:id/editSavedTermNote/:term', isLoggedIn, controller.editSavedTermNote);
 // router.delete('/:id/deleteSavedTermNote/:term', isLoggedIn, controller.deleteSavedTermNote)
 
-router.get('/all', controller.all);
+router.get('/all', isLoggedIn, isAdmin, controller.all);
 module.exports = router;
