@@ -122,6 +122,10 @@ userSchema.pre('save', function (next) {
     return !notification.read;
   });
   user.notifications = NewNotifications;
+  /*
+  const today = new Date().getTime();
+  const created = new Date(parseInt(user._id.substring(0, 8), 16) * 1000).getTime();
+  if(create) */
   next();
 });
 
